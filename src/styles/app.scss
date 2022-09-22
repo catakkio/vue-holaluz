@@ -3,3 +3,35 @@
 @tailwind utilities;
 
 @import './variables.scss';
+
+.box-shadow {
+    box-shadow: 0 5px 5px 0 rgb(0 0 0 / 13%);
+}
+
+#app {
+    font-family: Gilroy, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: var(--color-default);
+    letter-spacing: -0.2px;
+}
+
+.btn-primary {
+    color: var(--color-white-base);
+    background-color: var(--color-pink-base);
+    border-radius: var(--radius-large);
+    border: transparent;
+}
+
+.btn-primary:hover {
+    background-color: var(--color-pink-dark);
+}
+
+.btn-primary:active {
+    background-color: var(--color-pink-light) !important;
+}
+
+.content {
+    margin-bottom: 0;
+    padding-top: 5rem;
+}

@@ -1,7 +1,10 @@
 <template>
   <div>
-    <header class="flex justify-center px-0 py-1">
-      <img src="../assets/logo.png" alt="holaluz logo" class="logo" />
+    <header
+      class="flex justify-center items-center h-16 py-6 w-full top-0 box-shadow"
+    >
+      <img src="../assets/logo.png" alt="Holaluz logo" id="logo" />
+      sss
     </header>
   </div>
 </template>
@@ -12,5 +15,3 @@ export default {
 };
 </script>
 
-<style scoped>
-</style>
