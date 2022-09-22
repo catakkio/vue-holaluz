@@ -1,59 +1,51 @@
 <template>
  <div class="py-5">
 
-   <div id="search-bar">
-      <label for="cups" class="flex">
-      Write your CUPS code to check your status and see the offers available:
-      </label>
-      <div class="flexbox-container gap-2.5">
-         <input  type="text" name="cups" placeholder="Enter your CUPS" class="flex-inline input w-full" v-model="cupsCode" @keyup.enter="search()" />
-         <button class="flex-inline btn btn-primary" :disabled="searchBtnDisabled" @click="search()">Search</button>
-      </div>
-   </div>
+  <SearchBarComponent v-model="cupsCode" />
 
-    <div v-if="displayedClient" class="pt-3">  
-      <CardComponent title="Client info:"> 
-        <p>Full name: {{ displayedClient.full_name }}</p>
-        <p>Address: {{ displayedClient.address }} </p>
-        <p>Building type: {{ displayedClient.building_type }}</p>
-      </CardComponent>
-      
-      <CardComponent v-if="displayedSupplyPoint" title="Client supply point info:"> 
-        <p>Tariff: {{ displayedSupplyPoint.tariff }}</p>
-        <p>Invoiced amount: {{ displayedSupplyPoint.invoiced_amount }} €</p>
-        <p>Power:
-        <ul>
-            <li>P1: {{ displayedSupplyPoint.power?.p1 }}</li>
-            <li>P2: {{ displayedSupplyPoint.power?.p2 }}</li>
-        </ul>
-        </p>
-        <p>Neighbors nº: {{ displayedSupplyPoint.neighbors?.length }}</p>
-      </CardComponent>
-      <div v-else class="error margin-l-4">
-        <p>Can't find supply point data for this user</p>
-      </div>
+  <div v-if="displayedClient" class="pt-3">  
 
-      <CardComponent v-if="isClientAllowedToEnrollRooftopRevolution(displayedClient)"  title="Available offer:"> 
-        <ul>
-          <li v-if="displayedOfferAvailableForTheClient === offersType.standard">Standard offer: standard offer with no discount</li>
-          <li v-if="displayedOfferAvailableForTheClient === offersType.basic">Basic discount: 5% discount {{ displayedSupplyPoint.power?.p2 }}</li>
-          <li v-if="displayedOfferAvailableForTheClient === offersType.special">Special discount: 12% discount {{ displayedSupplyPoint.power?.p2 }}</li>
-        </ul>
-      </CardComponent>
-      <div v-else class="error"> 
-        <p> No offer available for this user </p>
-      </div>
+    <CardComponent title="Client info:"> 
+      <p>Full name: {{ displayedClient.full_name }}</p>
+      <p>Address: {{ displayedClient.address }} </p>
+      <p>Building type: {{ displayedClient.building_type }}</p>
+    </CardComponent>
+    
 
+    <CardComponent v-if="displayedSupplyPoint" title="Client supply point info:"> 
+      <p>Tariff: {{ displayedSupplyPoint.tariff }}</p>
+      <p>Invoiced amount: {{ displayedSupplyPoint.invoiced_amount }} €</p>
+      <p>Power:
+      <ul>
+          <li>P1: {{ displayedSupplyPoint.power?.p1 }}</li>
+          <li>P2: {{ displayedSupplyPoint.power?.p2 }}</li>
+      </ul>
+      </p>
+      <p>Neighbors nº: {{ displayedSupplyPoint.neighbors?.length }}</p>
+    </CardComponent>
+    <div v-else class="error margin-l-4">
+      <p>Can't find supply point data for this user</p>
     </div>
 
-  
 
-   </div>
+    <CardComponent v-if="isClientAllowedToEnrollRooftopRevolution(displayedClient)"  title="Available offer:"> 
+      <ul>
+        <li v-if="displayedOfferAvailableForTheClient === offersType.standard">Standard offer: standard offer with no discount</li>
+        <li v-if="displayedOfferAvailableForTheClient === offersType.basic">Basic discount: 5% discount {{ displayedSupplyPoint.power?.p2 }}</li>
+        <li v-if="displayedOfferAvailableForTheClient === offersType.special">Special discount: 12% discount {{ displayedSupplyPoint.power?.p2 }}</li>
+      </ul>
+    </CardComponent>
+    <div v-else class="error"> 
+      <p> No offer available for this user </p>
+    </div>
+
+  </div>
 
   <div v-if="showNoClientFoundError">
     <p class="error margin-l-4">No client found with the CUPS code entered</p>
   </div>
    
+</div>
 </template>
 
 <script>
@@ -62,13 +54,14 @@ fetchClients,
 fetchSupplyPoints
 } from "@/services/ApiService";
 
-import CardComponent from'../components/Card.vue'
+import CardComponent from'../../components/Card.vue'
+import SearchBarComponent from'./SearchBar.vue'
 export default {
   name: "RooftopRevolution",
   data() {
     return {
       cupsCode: "",
-      searchExecuted: false, //indicate if the search has been triggered at least 1 time
+      searchExecuted: false, //always true after the search has been triggered for the first time
 
       allClients: null,
       displayedClient: null,
@@ -76,21 +69,19 @@ export default {
       allSupplyPoints: null,
       displayedSupplyPoint: null,
 
+      displayedOfferAvailableForTheClient: null,
       offersType:{
         standard:"standard",
         basic:"basic",
         special:"special"
       },
-      displayedOfferAvailableForTheClient: null,
     };
   },
   components:{
     CardComponent,
+    SearchBarComponent
   },
   computed: {
-    searchBtnDisabled() {
-      return this.cupsCode.length === 0;
-    },
     showNoClientFoundError() {
       return !this.displayedClient && this.searchExecuted;
     },
@@ -133,13 +124,13 @@ export default {
     },
 
     isClientAllowedToEnrollRooftopRevolution(client) {
-      const buildingTypeAllowed = "house";
+      const buildingTypeNedeed = "house";
       const minNeighborNumber = 1;
 
-      return (
-        client.building_type == buildingTypeAllowed &&
-        this.displayedSupplyPoint.neighbors?.length >= minNeighborNumber
-      );
+      const isClientBuildingTypeMatching = client.building_type === buildingTypeNedeed
+      const hasClientEnoughNeighbors = this.displayedSupplyPoint.neighbors?.length >= minNeighborNumber
+
+      return isClientBuildingTypeMatching && hasClientEnoughNeighbors
     },
 
     calculateAvailableDiscountsForDisplayedUser() {
@@ -149,6 +140,7 @@ export default {
       ) {
           const userNeighborsCapsCodes = this.displayedSupplyPoint?.neighbors;
           let userNeighbors = [];
+
           userNeighborsCapsCodes.forEach((capsCode) => {
             userNeighbors.push(this.findSupplyPointByCupsCode(this.allSupplyPoints,capsCode));
           });
@@ -156,41 +148,39 @@ export default {
           if ( this.userAvailableForSpecialDiscount(this.displayedSupplyPoint, userNeighbors) ) { this.displayedOfferAvailableForTheClient = this.offersType.special; }
           else if ( this.userAvailableForBasicDiscount( this.displayedSupplyPoint, userNeighbors ) ) { this.displayedOfferAvailableForTheClient = this.offersType.basic; }
           else { this.displayedOfferAvailableForTheClient = this.offersType.standard;}
+
       } else {
         this.displayedOfferAvailableForTheClient = null;
       }
     },
     /**
      * To to access the basic discount the userd should have at least 1 neighbor with p1 and p2 power lower than his p1 and p2 power
-     * @param {*} userSupplyPoint the supply object of the user on which check the availability of the discount
-     * @param {*} neighborsArray the array of neighbors from wich retrieve the power
+     * @param {*} userSupplyPoint the supply of the user on which check the availability of the discount
+     * @param {*} neighbors array of neighbors from which retrieve the power
      */
-    userAvailableForBasicDiscount(userSupplyPoint, neighborsArray) {
-      if (userSupplyPoint && neighborsArray?.length > 0) {
-        const neighborWithLowerPower = Object.values(neighborsArray).find(
+    userAvailableForBasicDiscount(userSupplyPoint, neighbors) {
+      if (userSupplyPoint && neighbors?.length > 0) {
+        const neighborWithLowerPower = Object.values(neighbors).find(
           (neighbor) =>
             neighbor.power?.p1 < userSupplyPoint.power.p1 &&
             neighbor.power?.p2 < userSupplyPoint.power.p2
         );
-        const neighborWithLowerPowerFound = neighborWithLowerPower
-          ? true
-          : false;
+        const neighborWithLowerPowerFound = neighborWithLowerPower ? true : false;
         return neighborWithLowerPowerFound;
       }
     },
     /**
      * To be able to acces to the special discount the addition of the `invoiced_amount` of its neighbors should be more than 100 euros
-     * @param {*} userSupplyPoint the supply object of the user from on which check the availability of the discount
-     * @param {*} neighborsArray the array of neighbors from wich calculate the invoice amount
+     * @param {*} userSupplyPoint the user supply from which check the availability of the discount
+     * @param {*} neighbors array of neighbors from wich calculate the invoice amount
      */
-    userAvailableForSpecialDiscount(userSupplyPoint, neighborsArray) {
-      if (userSupplyPoint && neighborsArray?.length > 0) {
+    userAvailableForSpecialDiscount(userSupplyPoint, neighbors) {
+      if (userSupplyPoint && neighbors?.length > 0) {
         const amountToReachTheDiscount = 100;
-        const neighborsInvoiceTotalAmount = neighborsArray
+        const neighborsInvoiceTotalAmount = neighbors
           .map((neighbor) => neighbor.invoiced_amount)
           .reduce(
-            (totalAmount, neighborAmount) =>
-              parseInt(totalAmount) + parseInt(neighborAmount)
+            (totalAmount, neighborAmount) => parseInt(totalAmount) + parseInt(neighborAmount)
           );
 
         return neighborsInvoiceTotalAmount > amountToReachTheDiscount;
