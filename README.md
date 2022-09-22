@@ -14,7 +14,7 @@ We need a landing page that given a CUPS search we display both its client and s
 
 * We need to know which clients are allowed to get enrolled with the rooftop revolution. In order to offer solar product, the client's `building_type` must be **house** and it needs to have **at least 1 neighbor**.
 
-* We have three types of offers for those clients that can have be part of the rooftop revolution each of them with a different discount percentage and with their conditions:
+* We have three types of offers for those clients that can be part of the rooftop revolution each of them with a different discount percentage and with their conditions:
     1. **Standard offer**: No discount, no conditions.
     2. **Basic discount**: 5% discount. Conditions: its neighbors should have `p1` and `p2` powers lower than the current client's supply point.
     3. **Special discount**: 12% discount. Conditions: the addition of the `invoiced_amount` of its neighbors should be more than 100 euros.
@@ -40,3 +40,32 @@ We need a landing page that given a CUPS search we display both its client and s
 - **Invoiced amount**: Price that the client is paying monthly for the contracted power in euros.
 - **Building type**: Type of building the client lives in.
 - **Role**: The given type of client according to our internal marketing structure.
+
+
+
+
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/vue3-essential",
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "parser": "@babel/eslint-parser"
+    },
+    "rules": {},
+    "overrides": [
+      {
+        "files": [
+          "**/__tests__/*.{j,t}s?(x)",
+          "**/tests/unit/**/*.spec.{j,t}s?(x)"
+        ],
+        "env": {
+          "jest": true
+        }
+      }
+    ]
+  },
