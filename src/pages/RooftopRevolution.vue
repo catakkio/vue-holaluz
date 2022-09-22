@@ -1,5 +1,6 @@
 <template>
  <div class="py-5">
+
    <div id="search-bar">
       <label for="cups" class="flex">
       Write your CUPS code to check your status and see the offers available:
@@ -9,53 +10,50 @@
          <button class="flex-inline btn btn-primary" :disabled="searchBtnDisabled" @click="search()">Search</button>
       </div>
    </div>
-   <div v-if="displayedClient" class="pt-3">
-      <div class="card">
-         <h3>Client info:</h3>
-         <p>Full name: {{ displayedClient.full_name }}</p>
-         <p>Address: {{ displayedClient.address }} </p>
-         <p>Building type: {{ displayedClient.building_type }}</p>
-      </div>
-      <div v-if="displayedSupplyPoint">
-         <div class="card">
-            <h3>Client supply point info:</h3>
-            <p>Tariff: {{ displayedSupplyPoint.tariff }}</p>
-            <p>Invoiced amount: {{ displayedSupplyPoint.invoiced_amount }} €</p>
-            <p>Power:
-            <ul>
-               <li>P1: {{ displayedSupplyPoint.power?.p1 }}</li>
-               <li>P2: {{ displayedSupplyPoint.power?.p2 }}</li>
-            </ul>
-            </p>
-            <p>Neighbors nº: {{ displayedSupplyPoint.neighbors?.length }}</p>
-         </div>
-         <div v-if="isClientAllowedToEnrollRooftopRevolution(displayedClient)">
-            <div class="card">
-               <h3>Available offer:</h3>
-               <ul>
-                  <li v-if="displayedOfferAvailableForTheClient === offersType[0]">Standard offer: standard offer with no discount</li>
-                  <li v-if="displayedOfferAvailableForTheClient === offersType[1]">Basic discount: 5% discount {{ displayedSupplyPoint.power?.p2 }}</li>
-                  <li v-if="displayedOfferAvailableForTheClient === offersType[2]">Special discount: 12% discount{{ displayedSupplyPoint.power?.p2 }}</li>
-               </ul>
-            </div>
-         </div>
-         <div v-else class="error">
-            <p>
-               No offer available for this user
-            </p>
-         </div>
-      </div>
+
+    <div v-if="displayedClient" class="pt-3">  
+      <CardComponent title="Client info:"> 
+        <p>Full name: {{ displayedClient.full_name }}</p>
+        <p>Address: {{ displayedClient.address }} </p>
+        <p>Building type: {{ displayedClient.building_type }}</p>
+      </CardComponent>
+      
+      <CardComponent v-if="displayedSupplyPoint" title="Client supply point info:"> 
+        <p>Tariff: {{ displayedSupplyPoint.tariff }}</p>
+        <p>Invoiced amount: {{ displayedSupplyPoint.invoiced_amount }} €</p>
+        <p>Power:
+        <ul>
+            <li>P1: {{ displayedSupplyPoint.power?.p1 }}</li>
+            <li>P2: {{ displayedSupplyPoint.power?.p2 }}</li>
+        </ul>
+        </p>
+        <p>Neighbors nº: {{ displayedSupplyPoint.neighbors?.length }}</p>
+      </CardComponent>
       <div v-else class="error margin-l-4">
-         <p>
-            Can't find supply point data for this user
-         </p>
+        <p>Can't find supply point data for this user</p>
       </div>
+
+      <CardComponent v-if="isClientAllowedToEnrollRooftopRevolution(displayedClient)"  title="Available offer:"> 
+        <ul>
+          <li v-if="displayedOfferAvailableForTheClient === offersType.standard">Standard offer: standard offer with no discount</li>
+          <li v-if="displayedOfferAvailableForTheClient === offersType.basic">Basic discount: 5% discount {{ displayedSupplyPoint.power?.p2 }}</li>
+          <li v-if="displayedOfferAvailableForTheClient === offersType.special">Special discount: 12% discount {{ displayedSupplyPoint.power?.p2 }}</li>
+        </ul>
+      </CardComponent>
+      <div v-else class="error"> 
+        <p> No offer available for this user </p>
+      </div>
+
+    </div>
+
+  
+
    </div>
-   <div v-if="showNoClientFoundError">
-      <p class="error margin-l-4">No client found with the CUPS code entered</p>
-   </div>
+
+  <div v-if="showNoClientFoundError">
+    <p class="error margin-l-4">No client found with the CUPS code entered</p>
+  </div>
    
-</div>
 </template>
 
 <script>
@@ -64,6 +62,7 @@ fetchClients,
 fetchSupplyPoints
 } from "@/services/ApiService";
 
+import CardComponent from'../components/Card.vue'
 export default {
   name: "RooftopRevolution",
   data() {
@@ -77,9 +76,16 @@ export default {
       allSupplyPoints: null,
       displayedSupplyPoint: null,
 
-      offersType: ["standard", "basic", "special"], // array of offers available
+      offersType:{
+        standard:"standard",
+        basic:"basic",
+        special:"special"
+      },
       displayedOfferAvailableForTheClient: null,
     };
+  },
+  components:{
+    CardComponent,
   },
   computed: {
     searchBtnDisabled() {
@@ -147,9 +153,9 @@ export default {
             userNeighbors.push(this.findSupplyPointByCupsCode(this.allSupplyPoints,capsCode));
           });
 
-          if ( this.userAvailableForSpecialDiscount(this.displayedSupplyPoint, userNeighbors) ) { this.displayedOfferAvailableForTheClient = this.offersType[2]; }
-          else if ( this.userAvailableForBasicDiscount( this.displayedSupplyPoint, userNeighbors ) ) { this.displayedOfferAvailableForTheClient = this.offersType[1]; }
-          else { this.displayedOfferAvailableForTheClient = this.offersType[0];}
+          if ( this.userAvailableForSpecialDiscount(this.displayedSupplyPoint, userNeighbors) ) { this.displayedOfferAvailableForTheClient = this.offersType.special; }
+          else if ( this.userAvailableForBasicDiscount( this.displayedSupplyPoint, userNeighbors ) ) { this.displayedOfferAvailableForTheClient = this.offersType.basic; }
+          else { this.displayedOfferAvailableForTheClient = this.offersType.standard;}
       } else {
         this.displayedOfferAvailableForTheClient = null;
       }
