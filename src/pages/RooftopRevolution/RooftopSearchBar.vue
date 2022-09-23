@@ -7,6 +7,7 @@
       <input 
         type="text" 
         name="cups" 
+        id="cups"
         placeholder="Enter your CUPS" 
         class="flex-inline input w-full" 
         :value="modelValue" 
@@ -14,20 +15,30 @@
         @keyup.enter="search()" 
        />
 
-      <button class="flex-inline btn btn-primary" :disabled="searchBtnDisabled" @click="search()">Search</button>
+      <button 
+        id ="searchBtn"
+        class="flex-inline btn btn-primary" 
+        :disabled="searchBtnDisabled" 
+        @click="search()">
+        Search
+      </button>
+
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: "SearchBarComponent",
+  name: "RooftopSearchBar",
     props:{
-      modelValue:String
+      modelValue:{
+        type:String,
+        default:''
+      }
     },
   computed:{
     searchBtnDisabled() {
-      return this.modelValue.length === 0;
+      return this.modelValue?.length === 0;
     }
   },
   methods: {

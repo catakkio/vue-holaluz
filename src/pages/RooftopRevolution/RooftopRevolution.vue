@@ -1,10 +1,8 @@
 <template>
  <div class="py-5">
-
-  <SearchBarComponent v-model="cupsCode" />
+  <RooftopSearchBarComponent v-model="cupsCode" />
 
   <div v-if="displayedClient" class="pt-3">  
-
     <CardComponent title="Client info:"> 
       <p>Full name: {{ displayedClient.full_name }}</p>
       <p>Address: {{ displayedClient.address }} </p>
@@ -35,14 +33,14 @@
         <li v-if="displayedOfferAvailableForTheClient === offersType.special">Special discount: 12% discount {{ displayedSupplyPoint.power?.p2 }}</li>
       </ul>
     </CardComponent>
-    <div v-else class="error"> 
-      <p> No offer available for this user </p>
+    <div v-else class="error" > 
+      <p id="error-no-offer-available"> No offer available for this user </p>
     </div>
 
   </div>
 
   <div v-if="showNoClientFoundError">
-    <p class="error margin-l-4">No client found with the CUPS code entered</p>
+    <p id="error-no-client-found" class="error margin-l-4">No client found with the CUPS code entered</p>
   </div>
    
 </div>
@@ -55,7 +53,7 @@ fetchSupplyPoints
 } from "@/services/ApiService";
 
 import CardComponent from'../../components/Card.vue'
-import SearchBarComponent from'./SearchBar.vue'
+import RooftopSearchBarComponent from'./RooftopSearchBar.vue'
 export default {
   name: "RooftopRevolution",
   data() {
@@ -79,7 +77,7 @@ export default {
   },
   components:{
     CardComponent,
-    SearchBarComponent
+    RooftopSearchBarComponent
   },
   computed: {
     showNoClientFoundError() {
@@ -123,13 +121,15 @@ export default {
       return matchingSupplyPoint;
     },
 
+    /**
+     * user is allowed to enroll rooftop revolution if his building type is house and has at least 1 neighbor
+     */
     isClientAllowedToEnrollRooftopRevolution(client) {
       const buildingTypeNedeed = "house";
       const minNeighborNumber = 1;
 
       const isClientBuildingTypeMatching = client.building_type === buildingTypeNedeed
-      const hasClientEnoughNeighbors = this.displayedSupplyPoint.neighbors?.length >= minNeighborNumber
-
+      const hasClientEnoughNeighbors = this.displayedSupplyPoint?.neighbors?.length >= minNeighborNumber
       return isClientBuildingTypeMatching && hasClientEnoughNeighbors
     },
 
@@ -138,24 +138,27 @@ export default {
         this.displayedClient &&
         this.isClientAllowedToEnrollRooftopRevolution(this.displayedClient)
       ) {
-          const userNeighborsCapsCodes = this.displayedSupplyPoint?.neighbors;
-          let userNeighbors = [];
+          const neighborsCupsCodes = this.displayedSupplyPoint?.neighbors;
+          let neighbors = this.getNeighborsDataFromCupsCode(neighborsCupsCodes)
 
-          userNeighborsCapsCodes.forEach((capsCode) => {
-            userNeighbors.push(this.findSupplyPointByCupsCode(this.allSupplyPoints,capsCode));
-          });
-
-          if ( this.userAvailableForSpecialDiscount(this.displayedSupplyPoint, userNeighbors) ) { this.displayedOfferAvailableForTheClient = this.offersType.special; }
-          else if ( this.userAvailableForBasicDiscount( this.displayedSupplyPoint, userNeighbors ) ) { this.displayedOfferAvailableForTheClient = this.offersType.basic; }
+          if ( this.userAvailableForSpecialDiscount( neighbors) ) { this.displayedOfferAvailableForTheClient = this.offersType.special; }
+          else if ( this.userAvailableForBasicDiscount( this.displayedSupplyPoint, neighbors ) ) { this.displayedOfferAvailableForTheClient = this.offersType.basic; }
           else { this.displayedOfferAvailableForTheClient = this.offersType.standard;}
 
       } else {
         this.displayedOfferAvailableForTheClient = null;
       }
     },
+    getNeighborsDataFromCupsCode(neighborsCupsCodes){
+      let neighbors = [];
+      neighborsCupsCodes.forEach((capsCode) => {
+        neighbors.push(this.findSupplyPointByCupsCode(this.allSupplyPoints,capsCode));
+      });
+      return neighbors;
+    },
     /**
-     * To to access the basic discount the userd should have at least 1 neighbor with p1 and p2 power lower than his p1 and p2 power
-     * @param {*} userSupplyPoint the supply of the user on which check the availability of the discount
+     * To access the basic discount the userd should have at least 1 neighbor with p1 and p2 power lower than his p1 and p2 power
+     * @param {*} userSupplyPoint user supply from which retrieve his power
      * @param {*} neighbors array of neighbors from which retrieve the power
      */
     userAvailableForBasicDiscount(userSupplyPoint, neighbors) {
@@ -171,21 +174,23 @@ export default {
     },
     /**
      * To be able to acces to the special discount the addition of the `invoiced_amount` of its neighbors should be more than 100 euros
-     * @param {*} userSupplyPoint the user supply from which check the availability of the discount
      * @param {*} neighbors array of neighbors from wich calculate the invoice amount
      */
-    userAvailableForSpecialDiscount(userSupplyPoint, neighbors) {
-      if (userSupplyPoint && neighbors?.length > 0) {
+    userAvailableForSpecialDiscount(neighbors) {
+      if (neighbors?.length > 0) {
         const amountToReachTheDiscount = 100;
-        const neighborsInvoiceTotalAmount = neighbors
-          .map((neighbor) => neighbor.invoiced_amount)
-          .reduce(
-            (totalAmount, neighborAmount) => parseInt(totalAmount) + parseInt(neighborAmount)
-          );
+        const neighborsInvoiceTotalAmount = this.calculateNeighborsInvoiceTotalAmount(neighbors)
 
         return neighborsInvoiceTotalAmount > amountToReachTheDiscount;
       }
     },
-  },
+    calculateNeighborsInvoiceTotalAmount(neighbors){
+      return neighbors
+          .map((neighbor) => neighbor.invoiced_amount)
+          .reduce(
+            (totalAmount, neighborAmount) => parseInt(totalAmount) + parseInt(neighborAmount)
+          );
+    }
+  }
 };
 </script>

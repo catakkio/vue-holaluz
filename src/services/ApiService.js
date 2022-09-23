@@ -15,5 +15,6 @@ export const fetchSupplyPoints = async function () {
   if (response.status == 200) {
     supplyPoints = await response.json();
   }
+
   return supplyPoints;
 };
